@@ -1,0 +1,30 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: Maven@3
+  inputs:
+    mavenPomFile: 'pom.xml'
+    goals: 'package'
+    javaHomeOption: 'JDKVersion'
+    jdkVersionOption: 1.11
+    mavenOptions: '-Xmx3072m'
+
+- task: CopyFilesOverSSH@0
+  inputs:
+    sshEndpoint: 'TomcatVMServiceConnection'
+    sourceFolder: '$(System.DefaultWorkingDirectory)/target'
+    contents: '**/*.war'
+    targetFolder: '/home/snehaadmin/tomcat/webapps'
+
+- task: SSH@0
+  inputs:
+    sshEndpoint: 'TomcatVMServiceConnection'
+    runOptions: 'commands'
+    commands: |
+      cd /home/snehaadmin/tomcat/bin
+      sh shutdown.sh || true
+      sh startup.sh
